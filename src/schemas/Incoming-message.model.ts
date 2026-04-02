@@ -1,4 +1,8 @@
 import { Schema } from 'mongoose';
+import {
+	INCOMING_MESSAGE_STATUS_VALUES,
+	IncomingMessageStatus,
+} from '../libs/enums/Incoming-message.enum';
 
 const IncomingMessageSchema = new Schema(
 	{
@@ -32,8 +36,8 @@ const IncomingMessageSchema = new Schema(
 
 		messageStatus: {
 			type: String,
-			enum: ['UNREAD', 'READ'],
-			default: 'UNREAD',
+			enum: INCOMING_MESSAGE_STATUS_VALUES,
+			default: IncomingMessageStatus.UNREAD,
 			index: true,
 		},
 

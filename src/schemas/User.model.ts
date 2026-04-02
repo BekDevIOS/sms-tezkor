@@ -1,21 +1,29 @@
 import { Schema } from 'mongoose';
+import {
+	USER_AUTH_TYPE_VALUES,
+	USER_ROLE_VALUES,
+	USER_STATUS_VALUES,
+	UserAuthType,
+	UserRole,
+	UserStatus,
+} from '../libs/enums/User.enum';
 
 const UserSchema = new Schema(
 	{
 		userStatus: {
 			type: String,
-			enum: ['ACTIVE', 'BLOCKED', 'DELETED'],
-			default: 'ACTIVE',
+			enum: USER_STATUS_VALUES,
+			default: UserStatus.ACTIVE,
 		},
 		userRole: {
 			type: String,
-			enum: ['OWNER', 'ADMIN', 'MANAGER'],
-			default: 'OWNER',
+			enum: USER_ROLE_VALUES,
+			default: UserRole.OWNER,
 		},
 		userAuthType: {
 			type: String,
-			enum: ['EMAIL', 'PHONE'],
-			default: 'EMAIL',
+			enum: USER_AUTH_TYPE_VALUES,
+			default: UserAuthType.EMAIL,
 		},
 
 		userEmail: {

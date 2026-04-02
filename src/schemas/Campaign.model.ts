@@ -1,4 +1,12 @@
 import { Schema } from 'mongoose';
+import {
+	CAMPAIGN_SENDER_MODE_VALUES,
+	CAMPAIGN_STATUS_VALUES,
+	CAMPAIGN_TYPE_VALUES,
+	CampaignSenderMode,
+	CampaignStatus,
+	CampaignType,
+} from '../libs/enums/Campaign.enum';
 
 const CampaignSchema = new Schema(
 	{
@@ -18,19 +26,19 @@ const CampaignSchema = new Schema(
 
 		campaignType: {
 			type: String,
-			enum: ['INSTANT', 'SCHEDULED'],
-			default: 'INSTANT',
+			enum: CAMPAIGN_TYPE_VALUES,
+			default: CampaignType.INSTANT,
 		},
 		campaignStatus: {
 			type: String,
-			enum: ['DRAFT', 'SCHEDULED', 'PROCESSING', 'PAUSED', 'COMPLETED', 'FAILED', 'CANCELLED'],
-			default: 'DRAFT',
+			enum: CAMPAIGN_STATUS_VALUES,
+			default: CampaignStatus.DRAFT,
 			index: true,
 		},
 		campaignSenderMode: {
 			type: String,
-			enum: ['DEVICE'],
-			default: 'DEVICE',
+			enum: CAMPAIGN_SENDER_MODE_VALUES,
+			default: CampaignSenderMode.DEVICE,
 		},
 
 		campaignTitle: {

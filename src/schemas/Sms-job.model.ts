@@ -1,4 +1,10 @@
 import { Schema } from 'mongoose';
+import {
+	SMS_JOB_STATUS_VALUES,
+	SMS_JOB_TYPE_VALUES,
+	SmsJobStatus,
+	SmsJobType,
+} from '../libs/enums/Sms-job.enum';
 
 const SmsJobSchema = new Schema(
 	{
@@ -31,13 +37,13 @@ const SmsJobSchema = new Schema(
 
 		jobType: {
 			type: String,
-			enum: ['SEND_SMS'],
-			default: 'SEND_SMS',
+			enum: SMS_JOB_TYPE_VALUES,
+			default: SmsJobType.SEND_SMS,
 		},
 		jobStatus: {
 			type: String,
-			enum: ['WAITING', 'ACTIVE', 'COMPLETED', 'FAILED', 'CANCELLED'],
-			default: 'WAITING',
+			enum: SMS_JOB_STATUS_VALUES,
+			default: SmsJobStatus.WAITING,
 			index: true,
 		},
 

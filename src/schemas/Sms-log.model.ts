@@ -1,4 +1,10 @@
 import { Schema } from 'mongoose';
+import {
+	SMS_LOG_DIRECTION_VALUES,
+	SMS_LOG_STATUS_VALUES,
+	SmsLogDirection,
+	SmsLogStatus,
+} from '../libs/enums/Sms-log.enum';
 
 const SmsLogSchema = new Schema(
 	{
@@ -31,13 +37,13 @@ const SmsLogSchema = new Schema(
 
 		logDirection: {
 			type: String,
-			enum: ['OUTGOING'],
-			default: 'OUTGOING',
+			enum: SMS_LOG_DIRECTION_VALUES,
+			default: SmsLogDirection.OUTGOING,
 		},
 		logStatus: {
 			type: String,
-			enum: ['SENT', 'FAILED', 'DELIVERED'],
-			default: 'SENT',
+			enum: SMS_LOG_STATUS_VALUES,
+			default: SmsLogStatus.SENT,
 			index: true,
 		},
 

@@ -1,4 +1,12 @@
 import { Schema } from 'mongoose';
+import {
+	DEVICE_NETWORK_TYPE_VALUES,
+	DEVICE_PLATFORM_VALUES,
+	DEVICE_STATUS_VALUES,
+	DeviceNetworkType,
+	DevicePlatform,
+	DeviceStatus,
+} from '../libs/enums/Device.enum';
 
 const DeviceSchema = new Schema(
 	{
@@ -11,14 +19,14 @@ const DeviceSchema = new Schema(
 
 		deviceStatus: {
 			type: String,
-			enum: ['OFFLINE', 'ONLINE', 'BUSY', 'ERROR'],
-			default: 'OFFLINE',
+			enum: DEVICE_STATUS_VALUES,
+			default: DeviceStatus.OFFLINE,
 			index: true,
 		},
 		devicePlatform: {
 			type: String,
-			enum: ['ANDROID'],
-			default: 'ANDROID',
+			enum: DEVICE_PLATFORM_VALUES,
+			default: DevicePlatform.ANDROID,
 		},
 
 		deviceName: {
@@ -47,8 +55,8 @@ const DeviceSchema = new Schema(
 		},
 		deviceNetworkType: {
 			type: String,
-			enum: ['WIFI', 'MOBILE', 'UNKNOWN'],
-			default: 'UNKNOWN',
+			enum: DEVICE_NETWORK_TYPE_VALUES,
+			default: DeviceNetworkType.UNKNOWN,
 		},
 		deviceBatteryLevel: {
 			type: Number,

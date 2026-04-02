@@ -1,4 +1,8 @@
 import { Schema } from 'mongoose';
+import {
+	CONTACT_STATUS_VALUES,
+	ContactStatus,
+} from '../libs/enums/Contact.enum';
 
 const ContactSchema = new Schema(
 	{
@@ -18,8 +22,8 @@ const ContactSchema = new Schema(
 
 		contactStatus: {
 			type: String,
-			enum: ['NEW', 'CONTACTED', 'INTERESTED', 'CONVERTED', 'REJECTED'],
-			default: 'NEW',
+			enum: CONTACT_STATUS_VALUES,
+			default: ContactStatus.NEW,
 			index: true,
 		},
 
