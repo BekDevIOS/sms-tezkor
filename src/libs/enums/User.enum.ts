@@ -11,7 +11,7 @@ export const USER_STATUS_VALUES: UserStatusValue[] = Object.values(UserStatus);
 export const UserRole = {
 	OWNER: 'OWNER',
 	ADMIN: 'ADMIN',
-	MANAGER: 'MANAGER',
+	USER: 'USER',
 } as const;
 
 export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole];
