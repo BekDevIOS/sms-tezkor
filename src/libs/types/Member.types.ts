@@ -1,14 +1,14 @@
 import type { Types } from 'mongoose';
 import type {
-	UserAuthTypeValue,
-	UserRoleValue,
-	UserStatusValue,
-} from '../enums/User.enum';
+	MemberAuthTypeValue,
+	MemberRoleValue,
+	MemberStatusValue,
+} from '../enums/Member.enum';
 
-export interface User {
-	userStatus: UserStatusValue;
-	userRole: UserRoleValue;
-	userAuthType: UserAuthTypeValue;
+export interface Member {
+	userStatus: MemberStatusValue;
+	userRole: MemberRoleValue;
+	userAuthType: MemberAuthTypeValue;
 	userEmail?: string;
 	userPhone?: string;
 	userPassword: string;
@@ -25,5 +25,7 @@ export interface User {
 	updatedAt: Date;
 }
 
-/** User fields as returned to clients (no password). */
-export type UserPublic = Omit<User, 'userPassword'> & { _id: Types.ObjectId };
+/** Member fields as returned to clients (no password). */
+export type MemberPublic = Omit<Member, 'userPassword'> & {
+	_id: Types.ObjectId;
+};

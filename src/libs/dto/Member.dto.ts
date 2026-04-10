@@ -9,26 +9,26 @@ import {
 	Min,
 } from 'class-validator';
 import {
-	USER_AUTH_TYPE_VALUES,
-	USER_ROLE_VALUES,
-	USER_STATUS_VALUES,
-	type UserAuthTypeValue,
-	type UserRoleValue,
-	type UserStatusValue,
-} from '../enums/User.enum';
+	MEMBER_AUTH_TYPE_VALUES,
+	MEMBER_ROLE_VALUES,
+	MEMBER_STATUS_VALUES,
+	type MemberAuthTypeValue,
+	type MemberRoleValue,
+	type MemberStatusValue,
+} from '../enums/Member.enum';
 
-export class CreateUserDto {
+export class CreateMemberDto {
 	@IsOptional()
-	@IsIn(USER_STATUS_VALUES)
-	userStatus?: UserStatusValue;
-
-	@IsOptional()
-	@IsIn(USER_ROLE_VALUES)
-	userRole?: UserRoleValue;
+	@IsIn(MEMBER_STATUS_VALUES)
+	userStatus?: MemberStatusValue;
 
 	@IsOptional()
-	@IsIn(USER_AUTH_TYPE_VALUES)
-	userAuthType?: UserAuthTypeValue;
+	@IsIn(MEMBER_ROLE_VALUES)
+	userRole?: MemberRoleValue;
+
+	@IsOptional()
+	@IsIn(MEMBER_AUTH_TYPE_VALUES)
+	userAuthType?: MemberAuthTypeValue;
 
 	@IsOptional()
 	@IsEmail()
@@ -78,18 +78,18 @@ export class CreateUserDto {
 	userFailedSms?: number;
 }
 
-export class UpdateUserDto {
+export class UpdateMemberDto {
 	@IsOptional()
-	@IsIn(USER_STATUS_VALUES)
-	userStatus?: UserStatusValue;
+	@IsIn(MEMBER_STATUS_VALUES)
+	userStatus?: MemberStatusValue;
 
 	@IsOptional()
-	@IsIn(USER_ROLE_VALUES)
-	userRole?: UserRoleValue;
+	@IsIn(MEMBER_ROLE_VALUES)
+	userRole?: MemberRoleValue;
 
 	@IsOptional()
-	@IsIn(USER_AUTH_TYPE_VALUES)
-	userAuthType?: UserAuthTypeValue;
+	@IsIn(MEMBER_AUTH_TYPE_VALUES)
+	userAuthType?: MemberAuthTypeValue;
 
 	@IsOptional()
 	@IsEmail()

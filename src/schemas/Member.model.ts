@@ -1,29 +1,29 @@
 import { Schema } from 'mongoose';
 import {
-	USER_AUTH_TYPE_VALUES,
-	USER_ROLE_VALUES,
-	USER_STATUS_VALUES,
-	UserAuthType,
-	UserRole,
-	UserStatus,
-} from '../libs/enums/User.enum';
+	MEMBER_AUTH_TYPE_VALUES,
+	MEMBER_ROLE_VALUES,
+	MEMBER_STATUS_VALUES,
+	MemberAuthType,
+	MemberRole,
+	MemberStatus,
+} from '../libs/enums/Member.enum';
 
-const UserSchema = new Schema(
+const MemberSchema = new Schema(
 	{
 		userStatus: {
 			type: String,
-			enum: USER_STATUS_VALUES,
-			default: UserStatus.ACTIVE,
+			enum: MEMBER_STATUS_VALUES,
+			default: MemberStatus.ACTIVE,
 		},
 		userRole: {
 			type: String,
-			enum: USER_ROLE_VALUES,
-			default: UserRole.OWNER,
+			enum: MEMBER_ROLE_VALUES,
+			default: MemberRole.OWNER,
 		},
 		userAuthType: {
 			type: String,
-			enum: USER_AUTH_TYPE_VALUES,
-			default: UserAuthType.EMAIL,
+			enum: MEMBER_AUTH_TYPE_VALUES,
+			default: MemberAuthType.EMAIL,
 		},
 
 		userEmail: {
@@ -82,7 +82,7 @@ const UserSchema = new Schema(
 			type: Date,
 		},
 	},
-	{ timestamps: true, collection: 'users' },
+	{ timestamps: true, collection: 'members' },
 );
 
-export default UserSchema;
+export default MemberSchema;

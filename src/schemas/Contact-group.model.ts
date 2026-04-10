@@ -4,7 +4,7 @@ const ContactGroupSchema = new Schema(
 	{
 		userId: {
 			type: Schema.Types.ObjectId,
-			ref: 'User',
+			ref: 'Member',
 			required: true,
 			index: true,
 		},
