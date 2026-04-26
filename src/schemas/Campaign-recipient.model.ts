@@ -1,17 +1,8 @@
 import { Schema } from 'mongoose';
-import {
-	CAMPAIGN_RECIPIENT_STATUS_VALUES,
-	CampaignRecipientStatus,
-} from '../libs/enums/Campaign-recipient.enum';
+import { CampaignRecipientStatus } from '../libs/enums/campaign-recipient.enum';
 
 const CampaignRecipientSchema = new Schema(
 	{
-		userId: {
-			type: Schema.Types.ObjectId,
-			ref: 'Member',
-			required: true,
-			index: true,
-		},
 		campaignId: {
 			type: Schema.Types.ObjectId,
 			ref: 'Campaign',
@@ -21,44 +12,41 @@ const CampaignRecipientSchema = new Schema(
 		contactId: {
 			type: Schema.Types.ObjectId,
 			ref: 'Contact',
-			required: true,
 			index: true,
 		},
-		deviceId: {
-			type: Schema.Types.ObjectId,
-			ref: 'Device',
-			index: true,
-		},
-
-		recipientStatus: {
-			type: String,
-			enum: CAMPAIGN_RECIPIENT_STATUS_VALUES,
-			default: CampaignRecipientStatus.PENDING,
-			index: true,
-		},
-		recipientPhone: {
+		phone: {
 			type: String,
 			required: true,
 			trim: true,
 		},
-		recipientFailReason: {
+		assignedDeviceId: {
+			type: Schema.Types.ObjectId,
+			ref: 'Device',
+			index: true,
+		},
+		status: {
 			type: String,
-			default: '',
+			enum: CampaignRecipientStatus,
+			default: CampaignRecipientStatus.PENDING,
+			index: true,
 		},
-		recipientSentAt: {
-			type: Date,
+		attempts: {
+			type: Number,
+			default: 0,
+			min: 0,
 		},
-		recipientProcessedAt: {
-			type: Date,
+		failReason: {
+			type: String,
+			trim: true,
 		},
-
-		deletedAt: {
+		sentAt: {
 			type: Date,
 		},
 	},
-	{ timestamps: true, collection: 'campaignRecipients' },
+	{ timestamps: true, collection: 'campaign_recipients' },
 );
 
-CampaignRecipientSchema.index({ campaignId: 1, contactId: 1 }, { unique: true });
+CampaignRecipientSchema.index({ campaignId: 1, status: 1 });
+CampaignRecipientSchema.index({ status: 1, assignedDeviceId: 1 });
 
 export default CampaignRecipientSchema;

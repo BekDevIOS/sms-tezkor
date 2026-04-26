@@ -1,83 +1,48 @@
 import { Schema } from 'mongoose';
-import {
-	SMS_LOG_DIRECTION_VALUES,
-	SMS_LOG_STATUS_VALUES,
-	SmsLogDirection,
-	SmsLogStatus,
-} from '../libs/enums/Sms-log.enum';
+import { SmsLogStatus } from '../libs/enums/sms-log.enum';
 
 const SmsLogSchema = new Schema(
 	{
-		userId: {
+		memberId: {
 			type: Schema.Types.ObjectId,
-			ref: 'Member',
-			required: true,
-			index: true,
-		},
-		campaignId: {
-			type: Schema.Types.ObjectId,
-			ref: 'Campaign',
-			index: true,
-		},
-		campaignRecipientId: {
-			type: Schema.Types.ObjectId,
-			ref: 'CampaignRecipient',
-			index: true,
-		},
-		contactId: {
-			type: Schema.Types.ObjectId,
-			ref: 'Contact',
+			ref: 'members',
 			index: true,
 		},
 		deviceId: {
 			type: Schema.Types.ObjectId,
-			ref: 'Device',
+			ref: 'devices',
+			index: true,	
+		},
+		campaignId: {
+			type: Schema.Types.ObjectId,
+			ref: 'campaigns',
 			index: true,
 		},
-
-		logDirection: {
-			type: String,
-			enum: SMS_LOG_DIRECTION_VALUES,
-			default: SmsLogDirection.OUTGOING,
-		},
-		logStatus: {
-			type: String,
-			enum: SMS_LOG_STATUS_VALUES,
-			default: SmsLogStatus.SENT,
+		contactId: {
+			type: Schema.Types.ObjectId,
+			ref: 'contacts',
 			index: true,
 		},
-
-		logPhone: {
+		phone: {
 			type: String,
-			required: true,
 			trim: true,
 		},
-		logMessage: {
+		message: {
 			type: String,
+		},
+		status: {
+			type: String,
+			enum: SmsLogStatus,
 			required: true,
+			index: true,
 		},
-
-		logProviderStatus: {
-			type: String,
-			default: '',
-		},
-		logErrorCode: {
-			type: String,
-			default: '',
-		},
-		logErrorMessage: {
-			type: String,
-			default: '',
-		},
-
-		logSentAt: {
-			type: Date,
-		},
-		logDeliveredAt: {
-			type: Date,
+		providerResponse: {
+			type: Schema.Types.Mixed,
 		},
 	},
-	{ timestamps: true, collection: 'smsLogs' },
+	{ timestamps: true, collection: 'sms_logs' },
 );
+
+SmsLogSchema.index({ memberId: 1, createdAt: -1 });
 
 export default SmsLogSchema;

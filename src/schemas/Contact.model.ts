@@ -1,70 +1,37 @@
 import { Schema } from 'mongoose';
-import {
-	CONTACT_STATUS_VALUES,
-	ContactStatus,
-} from '../libs/enums/Contact.enum';
+import { ContactStatus } from '../libs/enums/contact.enum';
 
 const ContactSchema = new Schema(
 	{
-		userId: {
+		memberId: {
 			type: Schema.Types.ObjectId,
 			ref: 'Member',
 			required: true,
 			index: true,
 		},
-
-		groupIds: [
-			{
-				type: Schema.Types.ObjectId,
-				ref: 'ContactGroup',
-			},
-		],
-
-		contactStatus: {
-			type: String,
-			enum: CONTACT_STATUS_VALUES,
-			default: ContactStatus.NEW,
-			index: true,
-		},
-
-		contactFullName: {
+		name: {
 			type: String,
 			trim: true,
-			default: '',
 		},
-		contactPhone: {
+		phone: {
 			type: String,
 			required: true,
 			trim: true,
 		},
-		contactEmail: {
+		status: {
 			type: String,
-			trim: true,
-			lowercase: true,
-			default: '',
+			enum: ContactStatus,
+			default: ContactStatus.ACTIVE,
+			index: true,
 		},
-		contactTags: {
+		tags: {
 			type: [String],
 			default: [],
-		},
-		contactNotes: {
-			type: String,
-			default: '',
-		},
-		contactLastMessageAt: {
-			type: Date,
-		},
-		contactLastReplyAt: {
-			type: Date,
-		},
-
-		deletedAt: {
-			type: Date,
 		},
 	},
 	{ timestamps: true, collection: 'contacts' },
 );
 
-ContactSchema.index({ userId: 1, contactPhone: 1 }, { unique: true });
+ContactSchema.index({ memberId: 1, phone: 1 });
 
 export default ContactSchema;

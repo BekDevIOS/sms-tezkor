@@ -1,116 +1,76 @@
 import { Schema } from 'mongoose';
-import {
-	DEVICE_NETWORK_TYPE_VALUES,
-	DEVICE_PLATFORM_VALUES,
-	DEVICE_STATUS_VALUES,
-	DeviceNetworkType,
-	DevicePlatform,
-	DeviceStatus,
-} from '../libs/enums/Device.enum';
+import { DevicePlatform, DeviceStatus } from '../libs/enums/device.enum';
 
 const DeviceSchema = new Schema(
 	{
-		userId: {
+		memberId: {
 			type: Schema.Types.ObjectId,
-			ref: 'Member',
+			ref: 'members',
 			required: true,
 			index: true,
 		},
-
-		deviceStatus: {
+		code: {
 			type: String,
-			enum: DEVICE_STATUS_VALUES,
+			required: true,
+			unique: true,
+			trim: true,
+		},
+		name: {
+			type: String,
+			required: true,
+			trim: true,
+		},
+		status: {
+			type: String,
+			enum: DeviceStatus,
 			default: DeviceStatus.OFFLINE,
 			index: true,
 		},
-		devicePlatform: {
+		platform: {
 			type: String,
-			enum: DEVICE_PLATFORM_VALUES,
-			default: DevicePlatform.ANDROID,
+			enum: DevicePlatform,
 		},
-
-		deviceName: {
-			type: String,
-			required: true,
-			trim: true,
-		},
-		deviceCode: {
-			type: String,
-			required: true,
-			index: { unique: true },
-			trim: true,
-		},
-		deviceSocketId: {
-			type: String,
-			default: '',
-		},
-		devicePhone: {
+		phone: {
 			type: String,
 			trim: true,
-			default: '',
 		},
-		deviceCarrier: {
+		carrier: {
 			type: String,
-			default: '',
+			trim: true,
 		},
-		deviceNetworkType: {
+		networkType: {
 			type: String,
-			enum: DEVICE_NETWORK_TYPE_VALUES,
-			default: DeviceNetworkType.UNKNOWN,
+			trim: true,
 		},
-		deviceBatteryLevel: {
+		batteryLevel: {
 			type: Number,
-			default: 0,
+			min: 0,
+			max: 100,
 		},
-		deviceAppVersion: {
+		appVersion: {
 			type: String,
-			default: '',
+			trim: true,
 		},
-		deviceLastSeenAt: {
-			type: Date,
-			index: true,
-		},
-		devicePairedAt: {
+		lastSeenAt: {
 			type: Date,
 		},
-
-		deviceDailySentCount: {
-			type: Number,
-			default: 0,
-		},
-		deviceDailyFailedCount: {
-			type: Number,
-			default: 0,
-		},
-
-		deviceSettings: {
-			maxBatchSize: {
-				type: Number,
-				default: 100,
-			},
-			smsIntervalSec: {
-				type: Number,
-				default: 3,
-			},
-			batchPauseSec: {
-				type: Number,
-				default: 120,
-			},
-			dailyLimit: {
-				type: Number,
-				default: 300,
-			},
-			isEnabled: {
-				type: Boolean,
-				default: true,
-			},
-		},
-
-		deletedAt: {
+		pairedAt: {
 			type: Date,
+		},
+		currentLoad: {
+			type: Number,
+			default: 0,
+			min: 0,
+		},
+		sendLimitPerMinute: {
+			type: Number,
+			default: 60,
+			min: 1,
 		},
 	},
 	{ timestamps: true, collection: 'devices' },
 );
+
+DeviceSchema.index({ memberId: 1, status: 1 });
 
 export default DeviceSchema;

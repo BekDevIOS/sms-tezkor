@@ -1,79 +1,75 @@
 import { Schema } from 'mongoose';
-import {
-	MEMBER_AUTH_TYPE_VALUES,
-	MEMBER_ROLE_VALUES,
-	MEMBER_STATUS_VALUES,
-	MemberAuthType,
-	MemberRole,
-	MemberStatus,
-} from '../libs/enums/Member.enum';
+import { MemberAuthType, MemberRole, MemberStatus } from '../libs/enums/member.enum';
 
 const MemberSchema = new Schema(
 	{
-		userStatus: {
+		memberStatus: {
 			type: String,
-			enum: MEMBER_STATUS_VALUES,
+			enum: MemberStatus,
 			default: MemberStatus.ACTIVE,
 		},
-		userRole: {
+		memberRole: {
 			type: String,
-			enum: MEMBER_ROLE_VALUES,
-			default: MemberRole.OWNER,
+			enum: MemberRole,
+			default: MemberRole.USER,
 		},
-		userAuthType: {
+		memberAuthType: {
 			type: String,
-			enum: MEMBER_AUTH_TYPE_VALUES,
+			enum: MemberAuthType,
 			default: MemberAuthType.EMAIL,
 		},
 
-		userEmail: {
+		memberEmail: {
 			type: String,
 			index: { unique: true, sparse: true },
 			trim: true,
 			lowercase: true,
+			required: true,
 		},
-		userPhone: {
+		memberPhone: {
 			type: String,
 			index: { unique: true, sparse: true },
 			trim: true,
 		},
-		userPassword: {
+		memberPassword: {
 			type: String,
 			select: false,
 			required: true,
 		},
-		userFullName: {
+		memberFirstName: {
 			type: String,
 			required: true,
 			trim: true,
 		},
-		userCompanyName: {
+		memberLastName: {
 			type: String,
 			trim: true,
-			default: '',
 		},
-		userImage: {
+		memberCompanyName: {
 			type: String,
-			default: '',
+			trim: true,
+		},
+		memberImage: {
+			type: String,
 		},
 
-		userDevices: {
+		memberDevices: {
 			type: Number,
 			default: 0,
 		},
-		userContacts: {
+		memberContacts: {
 			type: Number,
 			default: 0,
 		},
-		userCampaigns: {
+		memberCampaigns: {
 			type: Number,
 			default: 0,
 		},
-		userSentSms: {
+		memberSentSms: {
 			type: Number,
 			default: 0,
 		},
-		userFailedSms: {
+		memberFailedSms: {
 			type: Number,
 			default: 0,
 		},

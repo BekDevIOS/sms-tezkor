@@ -6,7 +6,7 @@ import { Connection } from 'mongoose';
 	imports: [
 		MongooseModule.forRootAsync({
 			useFactory: () => ({
-				uri: process.env.MONGO_DEV,
+				uri: process.env.MONGO_URI,
 			}),
 		}),
 	],
