@@ -88,6 +88,7 @@ export class SubscriptionService {
       status: SubscriptionStatus.ACTIVE,
       startsAt,
       expiresAt,
+      deviceLimit: input.deviceLimit,
       note: input.note,
       activatedBy: new Types.ObjectId(adminId),
     });

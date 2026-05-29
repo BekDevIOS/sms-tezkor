@@ -31,6 +31,7 @@ export enum Message {
   // Device
   DEVICE_NOT_FOUND = 'Device not found!',
   INVALID_DEVICE_CODE = 'Invalid device code!',
+  DEVICE_LIMIT_REACHED = 'Device limit reached for your subscription!',
 
   // Subscription
   SUBSCRIPTION_REQUIRED = 'An active subscription is required. Please contact the administrator.',

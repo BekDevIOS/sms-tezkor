@@ -10,6 +10,7 @@ import { DeviceStatus } from '@app/shared/libs/enums/device.enum';
 import { SessionOwnerType } from '@app/shared/libs/enums/session.enum';
 import { MODEL } from '@app/shared/libs/types/model-names';
 import { AuthService } from '../auth/auth.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { DispatchService } from '@app/shared/dispatch/dispatch.service';
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
@@ -21,6 +22,7 @@ export class DeviceService {
     @InjectModel(MODEL.DEVICE) private readonly deviceModel: Model<any>,
     @InjectModel(MODEL.MEMBER) private readonly memberModel: Model<any>,
     private readonly authService: AuthService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly dispatchService: DispatchService,
   ) {}
 
@@ -36,6 +38,18 @@ export class DeviceService {
   /** Member creates a device slot; returns the one-time pairing code. */
   async createDevice(memberId: string, input: CreateDeviceDto): Promise<DeviceCreated> {
     const memberObjectId = new Types.ObjectId(memberId);
+
+    // Enforce the device cap set by the admin on the member's active subscription.
+    // No active subscription / no limit set => unlimited.
+    const subscription = await this.subscriptionService.getActiveForMember(memberId);
+    const limit = subscription?.deviceLimit;
+    if (typeof limit === 'number') {
+      const count = await this.deviceModel.countDocuments({ memberId: memberObjectId });
+      if (count >= limit) {
+        throw new AppException(HttpStatus.FORBIDDEN, Message.DEVICE_LIMIT_REACHED);
+      }
+    }
+
     let lastErr: unknown;
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = this.generateCode();

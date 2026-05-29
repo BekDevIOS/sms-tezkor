@@ -31,6 +31,11 @@ const SubscriptionSchema = new Schema(
     expiresAt: {
       type: Date,
     },
+    // Max devices the member may pair; null/undefined => unlimited.
+    deviceLimit: {
+      type: Number,
+      min: 0,
+    },
     note: {
       type: String,
       trim: true,

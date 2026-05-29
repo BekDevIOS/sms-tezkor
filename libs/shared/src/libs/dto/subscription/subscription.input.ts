@@ -25,6 +25,13 @@ export class ActivateSubscriptionDto {
   @Max(3650)
   durationDays?: number;
 
+  /** Max devices the member may pair. Omit for unlimited. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  deviceLimit?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(500)

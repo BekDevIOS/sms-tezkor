@@ -10,6 +10,7 @@ export class Subscription {
   status: SubscriptionStatus;
   startsAt: Date;
   expiresAt?: Date;
+  deviceLimit?: number;
   note?: string;
   activatedBy?: string;
   createdAt: Date;
