@@ -6,6 +6,7 @@ import { SessionOwnerType } from '../../../libs/enums/session.enum';
 import { AuthenticatedRequest } from '../../../libs/types/authenticated-request';
 import { MODEL } from '../../../libs/types/model-names';
 import { AuthService } from '../auth.service';
+import { MemberStatus } from '../../../libs/enums/member.enum';
 
 function extractBearer(req: AuthenticatedRequest): string | null {
   const header = req.headers['authorization'];
@@ -31,6 +32,9 @@ export class MemberAuthGuard implements CanActivate {
     if (!resolved) throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
 
     const { owner, session } = resolved;
+    if (owner.memberStatus !== MemberStatus.ACTIVE) {
+      throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
+    }
     req.member = {
       _id: String(owner._id),
       memberEmail: owner.memberEmail,

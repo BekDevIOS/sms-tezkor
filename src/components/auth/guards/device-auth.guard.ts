@@ -6,6 +6,8 @@ import { SessionOwnerType } from '../../../libs/enums/session.enum';
 import { AuthenticatedRequest } from '../../../libs/types/authenticated-request';
 import { MODEL } from '../../../libs/types/model-names';
 import { AuthService } from '../auth.service';
+import { DeviceStatus } from '../../../libs/enums/device.enum';
+import { MemberStatus } from '../../../libs/enums/member.enum';
 
 function extractBearer(req: AuthenticatedRequest): string | null {
   const header = req.headers['authorization'];
@@ -20,6 +22,7 @@ export class DeviceAuthGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     @InjectModel(MODEL.DEVICE) private readonly deviceModel: Model<any>,
+    @InjectModel(MODEL.MEMBER) private readonly memberModel: Model<any>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,6 +34,13 @@ export class DeviceAuthGuard implements CanActivate {
     if (!resolved) throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
 
     const { owner, session } = resolved;
+    if (owner.status === DeviceStatus.BLOCKED) {
+      throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
+    }
+    const member = await this.memberModel.findById(owner.memberId).select('memberStatus').lean();
+    if (!member || member.memberStatus !== MemberStatus.ACTIVE) {
+      throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
+    }
     req.device = {
       _id: String(owner._id),
       memberId: String(owner.memberId),

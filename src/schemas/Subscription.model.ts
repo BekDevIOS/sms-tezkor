@@ -36,6 +36,11 @@ const SubscriptionSchema = new Schema(
       type: Number,
       min: 0,
     },
+    // Daily outbound quota in Uzbekistan local time; null / undefined => unlimited.
+    dailySmsLimit: {
+      type: Number,
+      min: 1,
+    },
     note: {
       type: String,
       trim: true,

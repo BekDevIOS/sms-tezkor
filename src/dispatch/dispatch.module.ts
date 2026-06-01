@@ -5,6 +5,8 @@ import CampaignRecipientSchema from '../schemas/Campaign-recipient.model';
 import DeviceSchema from '../schemas/Device.model';
 import MemberSchema from '../schemas/Member.model';
 import SmsLogSchema from '../schemas/Sms-log.model';
+import SubscriptionSchema from '../schemas/Subscription.model';
+import DailySmsUsageSchema from '../schemas/Daily-sms-usage.model';
 import { MODEL } from '../libs/types/model-names';
 import { DispatchService } from './dispatch.service';
 
@@ -21,6 +23,8 @@ import { DispatchService } from './dispatch.service';
       { name: MODEL.DEVICE, schema: DeviceSchema },
       { name: MODEL.MEMBER, schema: MemberSchema },
       { name: MODEL.SMS_LOG, schema: SmsLogSchema },
+      { name: MODEL.SUBSCRIPTION, schema: SubscriptionSchema },
+      { name: MODEL.DAILY_SMS_USAGE, schema: DailySmsUsageSchema },
     ]),
   ],
   providers: [DispatchService],

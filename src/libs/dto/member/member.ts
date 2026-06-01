@@ -28,3 +28,8 @@ export class AuthResponse {
   token: string;
   member: Member;
 }
+
+export class Members {
+  list: Member[];
+  total: number;
+}

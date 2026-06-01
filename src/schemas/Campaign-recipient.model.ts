@@ -19,6 +19,14 @@ const CampaignRecipientSchema = new Schema(
 			required: true,
 			trim: true,
 		},
+		message: {
+			type: String,
+			required: true,
+		},
+		quotaReserved: {
+			type: Boolean,
+			default: false,
+		},
 		assignedDeviceId: {
 			type: Schema.Types.ObjectId,
 			ref: 'Device',

@@ -7,6 +7,7 @@ import { CampaignStatus } from '../libs/enums/campaign.enum';
 import { CampaignRecipientStatus } from '../libs/enums/campaign-recipient.enum';
 import { DeviceStatus } from '../libs/enums/device.enum';
 import { SmsLogStatus } from '../libs/enums/sms-log.enum';
+import { SubscriptionStatus } from '../libs/enums/subscription.enum';
 import { MODEL } from '../libs/types/model-names';
 
 export const MAX_ATTEMPTS = 3;
@@ -24,6 +25,8 @@ export class DispatchService {
     @InjectModel(MODEL.DEVICE) private readonly deviceModel: Model<any>,
     @InjectModel(MODEL.MEMBER) private readonly memberModel: Model<any>,
     @InjectModel(MODEL.SMS_LOG) private readonly smsLogModel: Model<any>,
+    @InjectModel(MODEL.SUBSCRIPTION) private readonly subscriptionModel: Model<any>,
+    @InjectModel(MODEL.DAILY_SMS_USAGE) private readonly dailySmsUsageModel: Model<any>,
   ) {}
 
   /**
@@ -118,6 +121,8 @@ export class DispatchService {
     const device = await this.deviceModel.findById(deviceId).lean();
     if (!device) return [];
     const cap = Math.min(Math.max(limit ?? device.sendLimitPerMinute ?? 60, 1), 500);
+    const dailyLimit = await this.getDailyLimit(device.memberId);
+    if (dailyLimit === 0) return [];
 
     // Fail recipients that have exhausted their attempts.
     await this.failExhausted(deviceId);
@@ -154,11 +159,12 @@ export class DispatchService {
     // Claim assigned PENDING recipients atomically.
     const claimed: any[] = [];
     while (claimed.length < cap) {
-      const r = await this.recipientModel.findOneAndUpdate(
+      let r = await this.recipientModel.findOneAndUpdate(
         {
           assignedDeviceId: device._id,
           status: CampaignRecipientStatus.PENDING,
           attempts: { $lt: MAX_ATTEMPTS },
+          quotaReserved: true,
         },
         {
           $set: { status: CampaignRecipientStatus.PROCESSING },
@@ -166,25 +172,88 @@ export class DispatchService {
         },
         { new: true },
       );
+      if (!r) {
+        const reserved = await this.reserveDailyQuota(device.memberId, dailyLimit);
+        if (!reserved) break;
+        r = await this.recipientModel.findOneAndUpdate(
+          {
+            assignedDeviceId: device._id,
+            status: CampaignRecipientStatus.PENDING,
+            attempts: { $lt: MAX_ATTEMPTS },
+            quotaReserved: { $ne: true },
+          },
+          {
+            $set: { status: CampaignRecipientStatus.PROCESSING, quotaReserved: true },
+            $inc: { attempts: 1 },
+          },
+          { new: true },
+        );
+        if (!r) {
+          await this.releaseDailyQuota(device.memberId, dailyLimit);
+          break;
+        }
+      }
       if (!r) break;
       claimed.push(r);
     }
     if (claimed.length === 0) return [];
 
-    // Attach the campaign message to each job.
-    const ids = [...new Set(claimed.map((r) => String(r.campaignId)))];
-    const campaigns = await this.campaignModel
-      .find({ _id: { $in: ids } })
-      .select('_id message')
-      .lean();
+    // Older recipients created before personalized snapshots fall back to the campaign body.
+    const ids = [...new Set(claimed.filter((r) => !r.message).map((r) => String(r.campaignId)))];
+    const campaigns = ids.length
+      ? await this.campaignModel.find({ _id: { $in: ids } }).select('_id message').lean()
+      : [];
     const messageById = new Map(campaigns.map((c) => [String(c._id), c.message]));
 
     return claimed.map((r) => ({
       recipientId: String(r._id),
       campaignId: String(r.campaignId),
       phone: r.phone,
-      message: messageById.get(String(r.campaignId)) ?? '',
+      message: r.message ?? messageById.get(String(r.campaignId)) ?? '',
     }));
+  }
+
+  private async getDailyLimit(memberId: Types.ObjectId): Promise<number | null> {
+    const now = new Date();
+    const subscription = await this.subscriptionModel
+      .findOne({
+        memberId,
+        status: SubscriptionStatus.ACTIVE,
+        startsAt: { $lte: now },
+        $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: now } }],
+      })
+      .sort({ createdAt: -1 })
+      .select('dailySmsLimit')
+      .lean();
+    if (!subscription) return 0;
+    return typeof subscription.dailySmsLimit === 'number' ? subscription.dailySmsLimit : null;
+  }
+
+  private uzbekistanDate(): string {
+    return new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  }
+
+  private async reserveDailyQuota(memberId: Types.ObjectId, limit: number | null): Promise<boolean> {
+    if (limit === null) return true;
+    try {
+      const usage = await this.dailySmsUsageModel.findOneAndUpdate(
+        { memberId, date: this.uzbekistanDate(), claimedCount: { $lt: limit } },
+        { $inc: { claimedCount: 1 }, $setOnInsert: { memberId, date: this.uzbekistanDate() } },
+        { new: true, upsert: true },
+      );
+      return !!usage;
+    } catch (err: any) {
+      if (err?.code === 11000) return false;
+      throw err;
+    }
+  }
+
+  private async releaseDailyQuota(memberId: Types.ObjectId, limit: number | null): Promise<void> {
+    if (limit === null) return;
+    await this.dailySmsUsageModel.updateOne(
+      { memberId, date: this.uzbekistanDate(), claimedCount: { $gt: 0 } },
+      { $inc: { claimedCount: -1 } },
+    );
   }
 
   /** Record a device's send result for one recipient and update all counters. */
@@ -260,7 +329,7 @@ export class DispatchService {
       campaignId: recipient.campaignId,
       contactId: recipient.contactId,
       phone: recipient.phone,
-      message: campaign?.message,
+      message: recipient.message ?? campaign?.message,
       status,
       providerResponse,
     });
@@ -300,7 +369,31 @@ export class DispatchService {
     }
   }
 
-  /** Reclaim recipients stuck in PROCESSING (device died mid-send). */
+  /** Release queued jobs when a device is reset or revoked. In-flight jobs are not retried automatically. */
+  async stopDeviceJobs(deviceId: string): Promise<void> {
+    const deviceObjectId = new Types.ObjectId(deviceId);
+    await this.recipientModel.updateMany(
+      { assignedDeviceId: deviceObjectId, status: CampaignRecipientStatus.PENDING },
+      { $unset: { assignedDeviceId: 1 } },
+    );
+
+    while (true) {
+      const recipient = await this.recipientModel.findOneAndUpdate(
+        { assignedDeviceId: deviceObjectId, status: CampaignRecipientStatus.PROCESSING },
+        { $set: { status: CampaignRecipientStatus.FAILED, failReason: 'send_result_unknown' } },
+        { new: true },
+      );
+      if (!recipient) break;
+      await this.finalizeCounters(recipient, deviceId, SmsLogStatus.FAILED);
+      await this.checkCampaignDone(recipient.campaignId);
+    }
+  }
+
+  /**
+   * Stop recipients stuck in PROCESSING. Their send outcome is unknown, so an
+   * automatic retry could send a duplicate SMS. Operators may retry manually
+   * after reviewing the device log.
+   */
   async resetStuckProcessing(): Promise<void> {
     const cutoff = new Date(Date.now() - STUCK_PROCESSING_MS);
     const stuck = await this.recipientModel
@@ -308,28 +401,21 @@ export class DispatchService {
         status: CampaignRecipientStatus.PROCESSING,
         updatedAt: { $lt: cutoff },
       })
-      .select('_id assignedDeviceId')
+      .select('_id assignedDeviceId campaignId')
       .lean();
     if (stuck.length === 0) return;
 
-    await this.recipientModel.updateMany(
-      { _id: { $in: stuck.map((s) => s._id) } },
-      { $set: { status: CampaignRecipientStatus.PENDING } },
-    );
-    // Release the load held on the devices.
-    const perDevice: Record<string, number> = {};
     for (const s of stuck) {
       if (!s.assignedDeviceId) continue;
-      const key = String(s.assignedDeviceId);
-      perDevice[key] = (perDevice[key] ?? 0) + 1;
+      const recipient = await this.recipientModel.findOneAndUpdate(
+        { _id: s._id, status: CampaignRecipientStatus.PROCESSING },
+        { $set: { status: CampaignRecipientStatus.FAILED, failReason: 'send_result_unknown' } },
+        { new: true },
+      );
+      if (!recipient) continue;
+      await this.finalizeCounters(recipient, String(s.assignedDeviceId), SmsLogStatus.FAILED);
+      await this.checkCampaignDone(recipient.campaignId);
     }
-    const ops = Object.entries(perDevice).map(([id, n]) => ({
-      updateOne: {
-        filter: { _id: new Types.ObjectId(id), currentLoad: { $gte: n } },
-        update: { $inc: { currentLoad: -n } },
-      },
-    }));
-    if (ops.length) await this.deviceModel.bulkWrite(ops);
-    this.logger.warn(`Reset ${stuck.length} stuck recipient(s) to PENDING`);
+    this.logger.warn(`Stopped ${stuck.length} recipient(s) with unknown send result`);
   }
 }

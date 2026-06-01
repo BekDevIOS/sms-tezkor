@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  ArrayMaxSize,
   IsEnum,
   IsIn,
   IsInt,
@@ -10,6 +11,8 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
+  IsMongoId,
 } from 'class-validator';
 import { availableContactSort } from '../../config';
 import { ContactStatus } from '../../enums/contact.enum';
@@ -33,6 +36,11 @@ export class CreateContactDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  groupIds?: string[];
 }
 
 export class UpdateContactDto {
@@ -54,6 +62,39 @@ export class UpdateContactDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  groupIds?: string[];
+}
+
+export class ImportContactRowDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsString()
+  @MinLength(1)
+  phone: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+}
+
+export class ImportContactsDto {
+  @IsArray()
+  @ArrayMaxSize(5000)
+  @ValidateNested({ each: true })
+  @Type(() => ImportContactRowDto)
+  rows: ImportContactRowDto[];
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  groupIds?: string[];
 }
 
 export class CISearch {
@@ -65,6 +106,10 @@ export class CISearch {
   @IsOptional()
   @IsEnum(ContactStatus)
   status?: ContactStatus;
+
+  @IsOptional()
+  @IsMongoId()
+  groupId?: string;
 }
 
 export class ContactsInquiry {

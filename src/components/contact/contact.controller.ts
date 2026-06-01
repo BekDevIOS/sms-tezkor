@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Contact, Contacts } from '../../libs/dto/contact/contact';
-import { ContactsInquiry, CreateContactDto, UpdateContactDto } from '../../libs/dto/contact/contact.input';
+import { ContactsInquiry, CreateContactDto, ImportContactsDto, UpdateContactDto } from '../../libs/dto/contact/contact.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { MemberAuthGuard } from '../auth/guards/member-auth.guard';
 import { ContactService } from './contact.service';
@@ -13,6 +13,11 @@ export class ContactController {
   @Post()
   create(@AuthMember('_id') memberId: string, @Body() input: CreateContactDto): Promise<Contact> {
     return this.contactService.create(memberId, input);
+  }
+
+  @Post('import')
+  import(@AuthMember('_id') memberId: string, @Body() input: ImportContactsDto) {
+    return this.contactService.import(memberId, input);
   }
 
   @Get()

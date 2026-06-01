@@ -11,6 +11,7 @@ export class Subscription {
   startsAt: Date;
   expiresAt?: Date;
   deviceLimit?: number;
+  dailySmsLimit?: number;
   note?: string;
   activatedBy?: string;
   createdAt: Date;

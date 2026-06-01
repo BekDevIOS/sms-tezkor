@@ -89,6 +89,7 @@ export class SubscriptionService {
       startsAt,
       expiresAt,
       deviceLimit: input.deviceLimit,
+      dailySmsLimit: input.dailySmsLimit,
       note: input.note,
       activatedBy: new Types.ObjectId(adminId),
     });

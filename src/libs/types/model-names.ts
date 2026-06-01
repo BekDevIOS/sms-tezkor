@@ -8,9 +8,13 @@ export const MODEL = {
   MEMBER: 'Member',
   DEVICE: 'Device',
   CONTACT: 'Contact',
+  CONTACT_GROUP: 'ContactGroup',
   CAMPAIGN: 'Campaign',
   CAMPAIGN_RECIPIENT: 'CampaignRecipient',
   SMS_LOG: 'SmsLog',
   SESSION: 'Session',
   SUBSCRIPTION: 'Subscription',
+  TEMPLATE: 'Template',
+  AUTO_REPLY: 'AutoReply',
+  DAILY_SMS_USAGE: 'DailySmsUsage',
 } as const;

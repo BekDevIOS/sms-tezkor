@@ -28,6 +28,11 @@ const ContactSchema = new Schema(
 			type: [String],
 			default: [],
 		},
+		groupIds: {
+			type: [{ type: Schema.Types.ObjectId, ref: 'ContactGroup' }],
+			default: [],
+			index: true,
+		},
 	},
 	{ timestamps: true, collection: 'contacts' },
 );

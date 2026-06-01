@@ -21,12 +21,16 @@ const SessionSchema = new Schema(
 		expiresAt: {
 			type: Date,
 			required: true,
-			index: true,
 		},
 	},
 	{ timestamps: true, collection: 'sessions' },
 );
 
 SessionSchema.index({ ownerId: 1, type: 1 });
+// TTL index: MongoDB auto-purges sessions once `expiresAt` passes.
+// NOTE: on an existing cluster that already has a plain `expiresAt_1` index,
+// drop it once (`db.sessions.dropIndex('expiresAt_1')`) so Mongoose can
+// recreate it with `expireAfterSeconds` — Mongo will not mutate it in place.
+SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default SessionSchema;

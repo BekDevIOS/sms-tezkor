@@ -32,6 +32,13 @@ export class ActivateSubscriptionDto {
   @Min(0)
   deviceLimit?: number;
 
+  /** Max outbound SMS jobs allowed per Uzbekistan calendar day. Omit for unlimited. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  dailySmsLimit?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(500)

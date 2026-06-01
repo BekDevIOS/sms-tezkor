@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthResponse } from '../../libs/dto/member/member';
 import { LoginInput, RegisterInput } from '../../libs/dto/member/member.input';
 import type { AuthenticatedRequest } from '../../libs/types/authenticated-request';
@@ -9,11 +10,14 @@ import { MemberAuthGuard } from './guards/member-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Tight limit on credential endpoints to blunt brute-force / credential stuffing.
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('register')
   register(@Body() input: RegisterInput): Promise<AuthResponse> {
     return this.authService.register(input);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('login')
   @HttpCode(200)
   login(@Body() input: LoginInput): Promise<AuthResponse> {

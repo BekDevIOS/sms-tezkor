@@ -7,6 +7,7 @@ export class Contact {
   phone: string;
   status: ContactStatus;
   tags: string[];
+  groupIds: string[];
   createdAt: Date;
   updatedAt: Date;
 }

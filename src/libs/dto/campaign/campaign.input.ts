@@ -45,8 +45,14 @@ export class CreateCampaignDto {
   @IsMongoId({ each: true })
   contactIds?: string[];
 
+  /** Recipients sourced from one or more saved contact groups. */
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  groupIds?: string[];
+
   /** Raw phone numbers not tied to a stored contact. */
-  @ValidateIf((o) => !o.contactIds || o.contactIds.length === 0)
+  @ValidateIf((o) => (!o.contactIds || o.contactIds.length === 0) && (!o.groupIds || o.groupIds.length === 0))
   @IsArray()
   @ArrayNotEmpty({ message: 'Provide contactIds and/or phones' })
   @IsString({ each: true })

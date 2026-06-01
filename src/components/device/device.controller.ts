@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { Device, DeviceClaimResult, DeviceCreated, DeviceJob, Devices } from '../../libs/dto/device/device';
 import {
   CreateDeviceDto,
@@ -30,15 +31,33 @@ export class DeviceController {
     return this.deviceService.getDevices(memberId);
   }
 
+  @Post(':id/reset-code')
+  @HttpCode(200)
+  @UseGuards(MemberAuthGuard)
+  resetCode(@AuthMember('_id') memberId: string, @Param('id') id: string): Promise<DeviceCreated> {
+    return this.deviceService.resetCode(memberId, id);
+  }
+
+  @Post(':id/revoke')
+  @HttpCode(200)
+  @UseGuards(MemberAuthGuard)
+  revoke(@AuthMember('_id') memberId: string, @Param('id') id: string) {
+    return this.deviceService.revoke(memberId, id);
+  }
+
   // ----- Device-facing -----
 
   /** Public: a phone exchanges its pairing code for a device session token. */
+  // Tight limit guards against pairing-code brute force.
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('claim')
   @HttpCode(200)
   claim(@Body() input: DeviceClaimInput): Promise<DeviceClaimResult> {
     return this.deviceService.claim(input.code);
   }
 
+  // High-frequency device polling endpoints: never throttle, or dispatch breaks.
+  @SkipThrottle()
   @Post('heartbeat')
   @HttpCode(200)
   @UseGuards(DeviceAuthGuard)
@@ -46,12 +65,14 @@ export class DeviceController {
     return this.deviceService.heartbeat(deviceId, input);
   }
 
+  @SkipThrottle()
   @Get('jobs')
   @UseGuards(DeviceAuthGuard)
   jobs(@AuthDevice('_id') deviceId: string, @Query('limit') limit?: string): Promise<DeviceJob[]> {
     return this.deviceService.getJobs(deviceId, limit ? Number(limit) : undefined);
   }
 
+  @SkipThrottle()
   @Post('report')
   @HttpCode(200)
   @UseGuards(DeviceAuthGuard)

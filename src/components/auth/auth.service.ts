@@ -94,7 +94,7 @@ export class AuthService {
     if (!member) {
       throw new AppException(HttpStatus.UNAUTHORIZED, Message.INVALID_CREDENTIALS);
     }
-    if (member.memberStatus === MemberStatus.BLOCKED) {
+    if (member.memberStatus !== MemberStatus.ACTIVE) {
       throw new AppException(HttpStatus.FORBIDDEN, Message.ACCOUNT_BLOCKED);
     }
     const ok = await this.comparePassword(input.memberPassword, member.memberPassword);
@@ -109,5 +109,9 @@ export class AuthService {
 
   async logout(token: string): Promise<void> {
     await this.sessionModel.deleteOne({ token });
+  }
+
+  async revokeSessions(ownerId: string | Types.ObjectId, type: SessionOwnerType): Promise<void> {
+    await this.sessionModel.deleteMany({ ownerId: new Types.ObjectId(ownerId), type });
   }
 }

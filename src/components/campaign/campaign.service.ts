@@ -9,6 +9,9 @@ import { CampaignRecipientStatus } from '../../libs/enums/campaign-recipient.enu
 import { Direction, Message } from '../../libs/enums/common';
 import { MODEL } from '../../libs/types/model-names';
 import { DispatchService } from '../../dispatch/dispatch.service';
+import { ContactStatus } from '../../libs/enums/contact.enum';
+import { findUnsupportedVariables, hasNameVariable, renderMessageTemplate } from '../../libs/utils/message-template';
+import { normalizePhone } from '../../libs/utils/phone';
 
 @Injectable()
 export class CampaignService {
@@ -17,6 +20,7 @@ export class CampaignService {
     @InjectModel(MODEL.CAMPAIGN_RECIPIENT)
     private readonly recipientModel: Model<any>,
     @InjectModel(MODEL.CONTACT) private readonly contactModel: Model<any>,
+    @InjectModel(MODEL.CONTACT_GROUP) private readonly groupModel: Model<any>,
     @InjectModel(MODEL.MEMBER) private readonly memberModel: Model<any>,
     private readonly dispatchService: DispatchService,
   ) {}
@@ -25,31 +29,75 @@ export class CampaignService {
     const memberObjectId = new Types.ObjectId(memberId);
 
     // Build recipient seeds from contacts (ownership-checked) and raw phones.
-    const seeds: { phone: string; contactId?: Types.ObjectId }[] = [];
+    const seeds = new Map<string, { phone: string; message: string; contactId?: Types.ObjectId }>();
+    const requiresName = hasNameVariable(input.message);
+    const unsupportedVariables = findUnsupportedVariables(input.message);
+    if (unsupportedVariables.length) {
+      throw new AppException(HttpStatus.BAD_REQUEST, `Unsupported message variables: ${unsupportedVariables.join(', ')}`);
+    }
 
-    if (input.contactIds?.length) {
+    let contactIds = input.contactIds ?? [];
+    if (input.groupIds?.length) {
+      const groupIds = [...new Set(input.groupIds)];
+      const ownedGroupCount = await this.groupModel.countDocuments({
+        _id: { $in: groupIds.map((id) => new Types.ObjectId(id)) },
+        memberId: memberObjectId,
+      });
+      if (ownedGroupCount !== groupIds.length) {
+        throw new AppException(HttpStatus.BAD_REQUEST, 'One or more contact groups not found or not owned by you');
+      }
+      const groupedContacts = await this.contactModel
+        .find({ memberId: memberObjectId, status: ContactStatus.ACTIVE, groupIds: { $in: groupIds } })
+        .select('_id')
+        .lean();
+      contactIds = [...new Set([...contactIds, ...groupedContacts.map((contact) => String(contact._id))])];
+    }
+
+    if (contactIds.length) {
       const contacts = await this.contactModel
         .find({
-          _id: { $in: input.contactIds.map((id) => new Types.ObjectId(id)) },
+          _id: { $in: contactIds.map((id) => new Types.ObjectId(id)) },
           memberId: memberObjectId,
+          status: ContactStatus.ACTIVE,
         })
-        .select('_id phone')
+        .select('_id name phone')
         .lean();
-      if (contacts.length !== input.contactIds.length) {
+      if (contacts.length !== contactIds.length) {
         throw new AppException(HttpStatus.BAD_REQUEST, Message.CONTACTS_NOT_OWNED);
       }
       for (const c of contacts) {
-        seeds.push({ phone: c.phone, contactId: c._id });
+        const phone = normalizePhone(c.phone);
+        if (!phone) {
+          throw new AppException(HttpStatus.BAD_REQUEST, `Invalid Uzbekistan or South Korea phone number: ${c.phone}`);
+        }
+        if (requiresName && !c.name?.trim()) {
+          throw new AppException(HttpStatus.BAD_REQUEST, `Contact ${c.phone} is missing a name required by {{name}}`);
+        }
+        seeds.set(phone, {
+          phone,
+          contactId: c._id,
+          message: renderMessageTemplate(input.message, { ...c, phone }),
+        });
       }
     }
 
     if (input.phones?.length) {
+      if (requiresName) {
+        throw new AppException(HttpStatus.BAD_REQUEST, '{{name}} can only be used with saved contacts');
+      }
       for (const phone of input.phones) {
-        seeds.push({ phone: phone.trim() });
+        const normalized = normalizePhone(phone);
+        if (!normalized) {
+          throw new AppException(HttpStatus.BAD_REQUEST, `Invalid Uzbekistan or South Korea phone number: ${phone}`);
+        }
+        seeds.set(normalized, {
+          phone: normalized,
+          message: renderMessageTemplate(input.message, { phone: normalized }),
+        });
       }
     }
 
-    if (seeds.length === 0) {
+    if (seeds.size === 0) {
       throw new AppException(HttpStatus.BAD_REQUEST, Message.CAMPAIGN_NO_RECIPIENTS);
     }
 
@@ -61,14 +109,15 @@ export class CampaignService {
       message: input.message,
       status: initialStatus,
       scheduledAt: input.scheduledAt,
-      totalCount: seeds.length,
+      totalCount: seeds.size,
     });
 
     await this.recipientModel.insertMany(
-      seeds.map((s) => ({
+      [...seeds.values()].map((s) => ({
         campaignId: campaign._id,
         contactId: s.contactId,
         phone: s.phone,
+        message: s.message,
         status: CampaignRecipientStatus.PENDING,
         attempts: 0,
       })),

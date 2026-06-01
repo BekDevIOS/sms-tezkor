@@ -18,6 +18,9 @@ export enum Message {
 
   // Member
   MEMBER_NOT_FOUND = 'Member not found!',
+  CANNOT_MODIFY_OWNER = 'You are not allowed to modify an owner account!',
+  CANNOT_PROMOTE_TO_OWNER = 'Promoting a member to owner is not allowed!',
+  CANNOT_MODIFY_SELF = 'You cannot change your own role or status!',
 
   // Contact
   CONTACT_NOT_FOUND = 'Contact not found!',
@@ -36,4 +39,10 @@ export enum Message {
   // Subscription
   SUBSCRIPTION_REQUIRED = 'An active subscription is required. Please contact the administrator.',
   SUBSCRIPTION_NOT_FOUND = 'Subscription not found!',
+
+  // Template
+  TEMPLATE_NOT_FOUND = 'Template not found!',
+
+  // Auto-reply
+  AUTO_REPLY_NOT_FOUND = 'Auto-reply rule not found!',
 }
