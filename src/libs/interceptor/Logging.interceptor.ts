@@ -9,6 +9,8 @@ import type { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+// Never log these — secrets and PII / bulky payloads. Used in development only;
+// in production we do not log request/response bodies at all.
 const SENSITIVE_BODY_KEYS = new Set([
 	'password',
 	'userPassword',
@@ -17,7 +19,13 @@ const SENSITIVE_BODY_KEYS = new Set([
 	'accessToken',
 	'sessionAccessToken',
 	'sessionRefreshToken',
+	'memberImage', // base64 avatar — floods logs
+	'message', // SMS content
+	'body', // auto-reply / SMS content
+	'replyBody',
 ]);
+
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -33,19 +41,18 @@ export class LoggingInterceptor implements NestInterceptor {
 		const started = Date.now();
 		const { method, originalUrl } = req;
 
-		this.logger.log(
-			`${method} ${originalUrl} ${this.previewBody(req.body)}`,
-			'REQUEST',
-		);
+		// In production: log only the request line (method/url) — no bodies, so
+		// SMS content, phone numbers and base64 images never reach the logs.
+		if (!IS_PROD) {
+			this.logger.log(`${method} ${originalUrl} ${this.previewBody(req.body)}`, 'REQUEST');
+		}
 
 		return next.handle().pipe(
 			tap({
 				next: (data: unknown) => {
 					const ms = Date.now() - started;
-					this.logger.log(
-						`${method} ${originalUrl} ${res.statusCode} ${ms}ms ${this.stringify(data)}`,
-						'RESPONSE',
-					);
+					const detail = IS_PROD ? '' : ` ${this.stringify(data)}`;
+					this.logger.log(`${method} ${originalUrl} ${res.statusCode} ${ms}ms${detail}`, 'RESPONSE');
 				},
 				error: (err: unknown) => {
 					const ms = Date.now() - started;

@@ -14,7 +14,22 @@ export class ContactGroupService {
   ) {}
 
   async list(memberId: string): Promise<ContactGroup[]> {
-    return this.groupModel.find({ memberId: new Types.ObjectId(memberId) }).sort({ name: 1 }).lean();
+    const memberObjectId = new Types.ObjectId(memberId);
+    const [groups, counts] = await Promise.all([
+      this.groupModel.find({ memberId: memberObjectId }).sort({ name: 1 }).lean(),
+      this.contactModel.aggregate([
+        { $match: { memberId: memberObjectId } },
+        { $unwind: '$groupIds' },
+        { $group: { _id: '$groupIds', n: { $sum: 1 } } },
+      ]),
+    ]);
+    const countByGroup = new Map<string, number>(
+      counts.map((c: { _id: Types.ObjectId; n: number }) => [String(c._id), c.n]),
+    );
+    return groups.map((group) => ({
+      ...group,
+      count: countByGroup.get(String(group._id)) ?? 0,
+    })) as ContactGroup[];
   }
 
   async create(memberId: string, input: CreateContactGroupDto): Promise<ContactGroup> {

@@ -45,4 +45,7 @@ export enum Message {
 
   // Auto-reply
   AUTO_REPLY_NOT_FOUND = 'Auto-reply rule not found!',
+
+  // Plan
+  PLAN_NOT_FOUND = 'Plan not found!',
 }

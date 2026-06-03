@@ -17,4 +17,5 @@ export const MODEL = {
   TEMPLATE: 'Template',
   AUTO_REPLY: 'AutoReply',
   DAILY_SMS_USAGE: 'DailySmsUsage',
+  PLAN: 'Plan',
 } as const;
