@@ -34,7 +34,7 @@ export enum Message {
   // Device
   DEVICE_NOT_FOUND = 'Device not found!',
   INVALID_DEVICE_CODE = 'Invalid device code!',
-  DEVICE_LIMIT_REACHED = 'Device limit reached for your subscription!',
+  DEVICE_LIMIT_REACHED = 'MVP rejimida faqat bitta yuboruvchi telefon ulash mumkin!',
 
   // Subscription
   SUBSCRIPTION_REQUIRED = 'An active subscription is required. Please contact the administrator.',

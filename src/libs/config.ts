@@ -2,6 +2,13 @@ export const DEFAULT_PAGE = 1;
 export const DEFAULT_LIMIT = 50;
 export const MAX_LIMIT = 200;
 
+/**
+ * TezkorSMS MVP intentionally supports one Android sender per account.
+ * Keep device references in the data model so multi-device can be enabled later
+ * without a destructive migration.
+ */
+export const MVP_DEVICE_LIMIT = 1;
+
 export const availableContactSort = ['createdAt', 'name', 'phone'] as const;
 export const availableCampaignSort = [
   'createdAt',
@@ -34,6 +41,6 @@ export const availableAutoReplySort = ['createdAt', 'triggerText', 'status'] as 
  */
 export const PLAN_LIMITS = {
   BASIC: { sendLimitPerMinute: 30, maxAttempts: 2, deviceLimit: 1 },
-  PRO: { sendLimitPerMinute: 120, maxAttempts: 3, deviceLimit: 5 },
-  ENTERPRISE: { sendLimitPerMinute: 500, maxAttempts: 5, deviceLimit: null },
+  PRO: { sendLimitPerMinute: 120, maxAttempts: 3, deviceLimit: 1 },
+  ENTERPRISE: { sendLimitPerMinute: 500, maxAttempts: 5, deviceLimit: 1 },
 } as const;

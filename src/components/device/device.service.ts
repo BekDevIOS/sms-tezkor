@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes } from 'crypto';
 import { Model, Types } from 'mongoose';
 import { AppException } from '../../common/app.exception';
-import { PLAN_LIMITS } from '../../libs/config';
+import { MVP_DEVICE_LIMIT, PLAN_LIMITS } from '../../libs/config';
 import { Device, DeviceClaimResult, DeviceCreated, DeviceJob, Devices } from '../../libs/dto/device/device';
 import { CreateDeviceDto, HeartbeatInput, ReportResultInput } from '../../libs/dto/device/device.input';
 import { Message } from '../../libs/enums/common';
@@ -41,9 +41,8 @@ export class DeviceService {
   async createDevice(memberId: string, input: CreateDeviceDto): Promise<DeviceCreated> {
     const memberObjectId = new Types.ObjectId(memberId);
 
-    // Derive device cap + per-device throughput from the member's plan.
-    // Explicit subscription.deviceLimit wins; otherwise fall back to the plan
-    // tier. Device slots are part of a paid subscription.
+    // Device slots are part of a paid subscription. MVP always has exactly one
+    // sender slot; subscription values cannot silently bypass this invariant.
     const subscription = await this.subscriptionService.getActiveForMember(memberId);
     if (!subscription) {
       throw new AppException(HttpStatus.FORBIDDEN, Message.SUBSCRIPTION_REQUIRED);
@@ -51,15 +50,9 @@ export class DeviceService {
     const planLimits = subscription?.plan
       ? PLAN_LIMITS[subscription.plan as SubscriptionPlan]
       : undefined;
-    const limit =
-      typeof subscription?.deviceLimit === 'number'
-        ? subscription.deviceLimit
-        : (planLimits?.deviceLimit ?? null);
-    if (typeof limit === 'number') {
-      const count = await this.deviceModel.countDocuments({ memberId: memberObjectId });
-      if (count >= limit) {
-        throw new AppException(HttpStatus.FORBIDDEN, Message.DEVICE_LIMIT_REACHED);
-      }
+    const count = await this.deviceModel.countDocuments({ memberId: memberObjectId });
+    if (count >= MVP_DEVICE_LIMIT) {
+      throw new AppException(HttpStatus.CONFLICT, Message.DEVICE_LIMIT_REACHED);
     }
 
     let lastErr: unknown;

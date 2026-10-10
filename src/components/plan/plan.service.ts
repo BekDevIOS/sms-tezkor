@@ -10,7 +10,7 @@ import { MODEL } from '../../libs/types/model-names';
 
 /**
  * Default catalog seeded on first boot. SMS is unlimited on every tier; the
- * tiers differ by device count. Prices start empty (negotiated) so the admin
+ * tiers differ by throughput. MVP plans all use one sender. Prices start empty (negotiated) so the admin
  * fills them in. Admins can override any of this at runtime via the admin API.
  */
 const PLAN_DEFAULTS: Array<Partial<Plan> & { code: SubscriptionPlan }> = [
@@ -19,7 +19,7 @@ const PLAN_DEFAULTS: Array<Partial<Plan> & { code: SubscriptionPlan }> = [
     name: 'Basic',
     price: null,
     dailySmsLimit: null, // cheksiz
-    deviceLimit: 2,
+    deviceLimit: 1,
     durationDays: 30,
     features: [],
     order: 1,
@@ -29,7 +29,7 @@ const PLAN_DEFAULTS: Array<Partial<Plan> & { code: SubscriptionPlan }> = [
     name: 'Pro',
     price: null,
     dailySmsLimit: null,
-    deviceLimit: 5,
+    deviceLimit: 1,
     durationDays: 30,
     features: [],
     order: 2,
@@ -39,7 +39,7 @@ const PLAN_DEFAULTS: Array<Partial<Plan> & { code: SubscriptionPlan }> = [
     name: 'Enterprise',
     price: null,
     dailySmsLimit: null,
-    deviceLimit: null, // cheksiz
+    deviceLimit: 1,
     durationDays: 30,
     features: [],
     order: 3,
