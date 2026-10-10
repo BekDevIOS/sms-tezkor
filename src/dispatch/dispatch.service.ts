@@ -13,6 +13,7 @@ import { MODEL } from '../libs/types/model-names';
 export const MAX_ATTEMPTS = 3;
 /** Recipients stuck in PROCESSING longer than this are reclaimed. */
 export const STUCK_PROCESSING_MS = 5 * 60 * 1000;
+export const DEVICE_ONLINE_TTL_MS = 90 * 1000;
 
 @Injectable()
 export class DispatchService {
@@ -28,6 +29,31 @@ export class DispatchService {
     @InjectModel(MODEL.SUBSCRIPTION) private readonly subscriptionModel: Model<any>,
     @InjectModel(MODEL.DAILY_SMS_USAGE) private readonly dailySmsUsageModel: Model<any>,
   ) {}
+
+  /** Paired, non-blocked devices that can be selected as a campaign sender. */
+  getAvailableSenderDevices(memberId: Types.ObjectId): Promise<any[]> {
+    return this.deviceModel
+      .find({
+        memberId,
+        status: { $ne: DeviceStatus.BLOCKED },
+        pairedAt: { $exists: true, $ne: null },
+      })
+      .select('_id name status lastSeenAt')
+      .sort({ createdAt: 1 })
+      .lean();
+  }
+
+  /** Heartbeat-derived presence: a crashed phone must not stay ONLINE forever. */
+  async markStaleDevicesOffline(): Promise<void> {
+    const cutoff = new Date(Date.now() - DEVICE_ONLINE_TTL_MS);
+    await this.deviceModel.updateMany(
+      {
+        status: DeviceStatus.ONLINE,
+        $or: [{ lastSeenAt: { $lt: cutoff } }, { lastSeenAt: { $exists: false } }],
+      },
+      { $set: { status: DeviceStatus.OFFLINE } },
+    );
+  }
 
   /**
    * Idempotently start a campaign: assign its PENDING recipients to online
@@ -60,8 +86,16 @@ export class DispatchService {
    * (recipients stay PENDING and are picked up on a later tick / device poll).
    */
   async assignRecipients(campaign: any): Promise<void> {
+    const deviceFilter: Record<string, unknown> = {
+      memberId: campaign.memberId,
+      status: DeviceStatus.ONLINE,
+      lastSeenAt: { $gte: new Date(Date.now() - DEVICE_ONLINE_TTL_MS) },
+    };
+    if (campaign.senderDeviceId) {
+      deviceFilter._id = campaign.senderDeviceId;
+    }
     const devices = await this.deviceModel
-      .find({ memberId: campaign.memberId, status: DeviceStatus.ONLINE })
+      .find(deviceFilter)
       .select('_id currentLoad')
       .lean();
     if (devices.length === 0) return;
@@ -129,7 +163,15 @@ export class DispatchService {
 
     // Lazily assign unassigned PENDING recipients of this member's running campaigns.
     const sendingCampaigns = await this.campaignModel
-      .find({ memberId: device.memberId, status: CampaignStatus.SENDING })
+      .find({
+        memberId: device.memberId,
+        status: CampaignStatus.SENDING,
+        $or: [
+          { senderDeviceId: device._id },
+          { senderDeviceId: { $exists: false } },
+          { senderDeviceId: null },
+        ],
+      })
       .select('_id')
       .lean();
     const campaignIds = sendingCampaigns.map((c) => c._id);

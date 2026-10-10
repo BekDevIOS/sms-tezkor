@@ -38,6 +38,18 @@ const DeviceSchema = new Schema(
 			type: String,
 			trim: true,
 		},
+		simSubscriptionId: {
+			type: Number,
+			min: 0,
+		},
+		simSlotIndex: {
+			type: Number,
+			min: 0,
+		},
+		simCarrier: {
+			type: String,
+			trim: true,
+		},
 		networkType: {
 			type: String,
 			trim: true,

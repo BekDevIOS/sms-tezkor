@@ -39,6 +39,11 @@ export class CreateCampaignDto {
   @IsBoolean()
   sendNow?: boolean;
 
+  /** Paired Android device that must send every recipient in this campaign. */
+  @IsOptional()
+  @IsMongoId()
+  deviceId?: string;
+
   /** Recipients sourced from existing contacts (must belong to the member). */
   @IsOptional()
   @IsArray()

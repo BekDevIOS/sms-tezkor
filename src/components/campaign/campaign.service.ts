@@ -10,6 +10,7 @@ import { Direction, Message } from '../../libs/enums/common';
 import { MODEL } from '../../libs/types/model-names';
 import { DispatchService } from '../../dispatch/dispatch.service';
 import { ContactStatus } from '../../libs/enums/contact.enum';
+import { DeviceStatus } from '../../libs/enums/device.enum';
 import { findUnsupportedVariables, hasNameVariable, renderMessageTemplate } from '../../libs/utils/message-template';
 import { normalizePhone } from '../../libs/utils/phone';
 
@@ -101,12 +102,29 @@ export class CampaignService {
       throw new AppException(HttpStatus.BAD_REQUEST, Message.CAMPAIGN_NO_RECIPIENTS);
     }
 
+    const pairedDevices = await this.dispatchService.getAvailableSenderDevices(memberObjectId);
+    let senderDeviceId: Types.ObjectId;
+    if (input.deviceId) {
+      const selected = pairedDevices.find((device) => String(device._id) === input.deviceId);
+      if (!selected || selected.status === DeviceStatus.BLOCKED) {
+        throw new AppException(HttpStatus.BAD_REQUEST, 'Selected sender device is not available');
+      }
+      senderDeviceId = selected._id;
+    } else if (pairedDevices.length === 1) {
+      senderDeviceId = pairedDevices[0]._id;
+    } else if (pairedDevices.length === 0) {
+      throw new AppException(HttpStatus.BAD_REQUEST, 'Pair an Android sender device before creating a campaign');
+    } else {
+      throw new AppException(HttpStatus.BAD_REQUEST, 'Choose which device should send this campaign');
+    }
+
     const initialStatus = input.scheduledAt ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT;
 
     const campaign = await this.campaignModel.create({
       memberId: memberObjectId,
       title: input.title,
       message: input.message,
+      senderDeviceId,
       status: initialStatus,
       scheduledAt: input.scheduledAt,
       totalCount: seeds.size,

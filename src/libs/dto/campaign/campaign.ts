@@ -5,6 +5,7 @@ export class Campaign {
   memberId: string;
   title: string;
   message: string;
+  senderDeviceId?: string;
   status: CampaignStatus;
   scheduledAt?: Date;
   totalCount: number;

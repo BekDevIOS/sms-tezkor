@@ -159,6 +159,9 @@ export class DeviceService {
     if (input.batteryLevel !== undefined) update.batteryLevel = input.batteryLevel;
     if (input.networkType !== undefined) update.networkType = input.networkType;
     if (input.appVersion !== undefined) update.appVersion = input.appVersion;
+    if (input.simSubscriptionId !== undefined) update.simSubscriptionId = input.simSubscriptionId;
+    if (input.simSlotIndex !== undefined) update.simSlotIndex = input.simSlotIndex;
+    if (input.simCarrier !== undefined) update.simCarrier = input.simCarrier;
 
     const device = await this.deviceModel.findByIdAndUpdate(deviceId, { $set: update }, { new: true }).lean();
     if (!device) {

@@ -21,6 +21,7 @@ export class CampaignScheduler {
     if (this.isRunning) return;
     this.isRunning = true;
     try {
+      await this.dispatchService.markStaleDevicesOffline();
       await this.activateDueCampaigns();
       await this.sweepSendingCampaigns();
       await this.dispatchService.resetStuckProcessing();

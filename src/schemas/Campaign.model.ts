@@ -18,6 +18,11 @@ const CampaignSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		senderDeviceId: {
+			type: Schema.Types.ObjectId,
+			ref: 'Device',
+			index: true,
+		},
 		status: {
 			type: String,
 			enum: CampaignStatus,

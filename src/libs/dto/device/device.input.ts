@@ -55,6 +55,22 @@ export class HeartbeatInput {
   @IsOptional()
   @IsString()
   appVersion?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  simSubscriptionId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  simSlotIndex?: number;
+
+  @IsOptional()
+  @IsString()
+  simCarrier?: string;
 }
 
 /** Device reports the outcome of one recipient send. */
