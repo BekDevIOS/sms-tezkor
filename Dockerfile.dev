@@ -3,7 +3,8 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY --chown=node:node package.json package-lock.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci \
+    && chown -R node:node /app/node_modules \
+    && npm cache clean --force
 
 USER node
-
