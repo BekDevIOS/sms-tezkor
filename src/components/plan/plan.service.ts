@@ -55,13 +55,15 @@ export class PlanService implements OnModuleInit {
   /** Seed any missing default plans without clobbering admin edits. */
   async onModuleInit(): Promise<void> {
     await Promise.all(
-      PLAN_DEFAULTS.map((def) =>
-        this.planModel.updateOne(
+      PLAN_DEFAULTS.map((def) => {
+        const insert = { ...def };
+        delete insert.deviceLimit;
+        return this.planModel.updateOne(
           { code: def.code },
-          { $setOnInsert: def },
+          { $setOnInsert: insert, $set: { deviceLimit: 1 } },
           { upsert: true },
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -86,6 +88,7 @@ export class PlanService implements OnModuleInit {
     for (const [key, value] of Object.entries(input)) {
       if (value !== undefined) patch[key] = value;
     }
+    patch.deviceLimit = 1;
 
     const updated = await this.planModel
       .findOneAndUpdate({ code }, { $set: patch }, { new: true })

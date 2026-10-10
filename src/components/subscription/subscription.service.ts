@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AppException } from '../../common/app.exception';
@@ -15,12 +15,19 @@ import { SubscriptionStatus } from '../../libs/enums/subscription.enum';
 import { MODEL } from '../../libs/types/model-names';
 
 @Injectable()
-export class SubscriptionService {
+export class SubscriptionService implements OnModuleInit {
   constructor(
     @InjectModel(MODEL.SUBSCRIPTION)
     private readonly subscriptionModel: Model<any>,
     @InjectModel(MODEL.MEMBER) private readonly memberModel: Model<any>,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.subscriptionModel.updateMany(
+      { deviceLimit: { $ne: 1 } },
+      { $set: { deviceLimit: 1 } },
+    );
+  }
 
   /**
    * Returns the member's active, non-expired subscription, or null.
@@ -88,7 +95,7 @@ export class SubscriptionService {
       status: SubscriptionStatus.ACTIVE,
       startsAt,
       expiresAt,
-      deviceLimit: input.deviceLimit,
+      deviceLimit: 1,
       dailySmsLimit: input.dailySmsLimit,
       note: input.note,
       activatedBy: new Types.ObjectId(adminId),
