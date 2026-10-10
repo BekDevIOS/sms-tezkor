@@ -63,6 +63,25 @@ services:
         condition: service_healthy
     stop_grace_period: 10s
 
+  # Optional HTTPS endpoint for testing a standalone dev-release APK on a
+  # physical phone. Start it with:
+  #   docker compose -f compose.dev.yml --profile phone up -d tunnel
+  # Quick Tunnel URLs are temporary and may change when this container is
+  # recreated; rebuild the APK with the current URL when that happens.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: ["phone"]
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - tunnel
+      - --no-autoupdate
+      - --url
+      - http://127.0.0.1:4010
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   mongo_data:
   node_modules:
